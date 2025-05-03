@@ -1,15 +1,13 @@
 /*******************************************************************
-  Project main function template for MicroZed based MZ_APO board
-  designed by Petr Porazil at PiKRON
+  Main function of the 3D visualizer application
 
   main.c      - main file
 
   include your name there and license for distribution.
 
-  Remove next text: This line should not appear in submitted
-  work and project name should be change to match real application.
-  If this text is there I want 10 points subtracted from final
-  evaluation.
+  After startup the user is presented with a screen where he can
+  choose a 3D model to be loaded in, after selecting the model
+  
 
  *******************************************************************/
 #define _POSIX_C_SOURCE 200112L
@@ -43,13 +41,11 @@ const int SCREEN_HEIGHT = 320;
 const float FOV = 60;
 #define FPS 60
 
-
-
 const int MODE_MAX = 1;
 //-----------------------------------
 
-char* model = "skull.stl";
-#define DOUBLE_CLICK_TOLERANCE 0.2 // Doensn't work
+// char* curent_object = "golf.stl";
+char* current_object = "";
 #define CURRENT_DIRECTORY "."
 #define FILE_TYPE ".stl"
 
@@ -60,7 +56,7 @@ void draw_pixel(unsigned char *parlcd_mem_base,uint16_t color);
 void draw_frame(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH],unsigned char* parlcd_mem_base);
 void clear_buffer(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH]);
 void print_stats(enum Mode mode, int* fps, clock_t* start, knobs_t* knobs);
-
+obj_t load_object(char* object_to_load);
 
 int main(int argc, char *argv[])
 {
@@ -91,23 +87,25 @@ int main(int argc, char *argv[])
 			{1,0,0},
 		}
 	};
-
-	float light[3] = {0.f,0.f,10.f};
-
-	obj_t obj = readBinarySTL(model);
-	obj_t objs[1] = {obj,};
+	
 	uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH];
+	float light[3] = {0.f,0.f,10.f};
 	
 	clock_t start = clock();
 	int fps = 0;
- 
+	
 	bool chooseMode = false;
 	enum Mode mode = POLYGON;
-
+	
 	//-----------------------------------
 	directory_t* dir = get_directory_file_names(CURRENT_DIRECTORY, FILE_TYPE);
-
+	
 	fdes = &font_winFreeSystem14x16;
+	// fdes = &font_rom8x16;
+	
+	obj_t obj = {0};
+	obj_t objs[1];
+	char* object_to_load = dir->file_names[dir->active_file];
 
 	while (running) {
 		switch (state) {
@@ -115,29 +113,32 @@ int main(int argc, char *argv[])
 				while (state == 0) {
 
 					read_knobs_values(mem_base, knobs);
-
-					print_dir_file_names(dir);
-					// display_files();
 					
 					clear_buffer(pixelBuffer);
 					
-					// Doesn't work
-					unsigned int col = hsv2rgb_lcd(155, 155, 155);
-					draw_char_test(pixelBuffer, 100, 100, 'g', col);
-					draw_char_test(pixelBuffer, 200, 200, 'g', col);
+					display_files(dir, pixelBuffer);
+					
+					choose_file(knobs, dir);
+					object_to_load = dir->file_names[dir->active_file];
 
 					draw_frame(pixelBuffer, parlcd_mem_base);
 					
-					int i = 0;
-					if((i % 100) == 0) printf("State=%d\n", state);
-					i++;
+					print_stats(mode, &fps, &start, knobs);
+					
 					clock_nanosleep(CLOCK_MONOTONIC, 0, &delay, NULL);
-
 					check_state(&state, knobs);
 				}
 				break;
 			case 1:
 				while (state == 1) {
+					
+					if(strcmp(current_object, object_to_load) != 0) {
+						// Load a new object
+						free_obj(&obj);
+						obj = load_object(object_to_load);
+						objs[0] = obj;
+					}
+
 					read_knobs_values(mem_base, knobs);
 					if(knobs->encodersSwitched[0]) chooseMode = !chooseMode;
 
@@ -177,15 +178,23 @@ int main(int argc, char *argv[])
 		}
     }
 
-	free_obj(obj);
+	free_obj(&obj);
 	free(knobs);
 	free_directory(dir);
-	munmap_phys_address(mem_base, SPILED_REG_SIZE);
-	munmap_phys_address(parlcd_mem_base, PARLCD_REG_SIZE);
+	free(current_object);
+	// munmap_phys_address(mem_base, SPILED_REG_SIZE);
+	// munmap_phys_address(parlcd_mem_base, PARLCD_REG_SIZE);
 
     return 0;
 }
 
+obj_t load_object(char* object_to_load) {
+    printf("Loading 3D model: %s\n", object_to_load);
+    obj_t obj = readBinarySTL(object_to_load);
+    current_object = object_to_load;
+    
+    return obj;
+}
 
 void draw_pixel(unsigned char *parlcd_mem_base,uint16_t color) {
 	parlcd_write_data(parlcd_mem_base, color);

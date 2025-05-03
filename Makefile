@@ -74,7 +74,12 @@ copy-executable: $(TARGET_EXE)
 	ssh $(SSH_OPTIONS) -t $(TARGET_USER)@$(TARGET_IP) killall gdbserver 1>/dev/null 2>/dev/null || true
 	ssh $(SSH_OPTIONS) $(TARGET_USER)@$(TARGET_IP) mkdir -p $(TARGET_DIR)
 	scp $(SSH_OPTIONS) $(TARGET_EXE) $(TARGET_USER)@$(TARGET_IP):$(TARGET_DIR)/$(TARGET_EXE)
+	
+	ssh $(SSH_OPTIONS) $(TARGET_USER)@$(TARGET_IP) mkdir -p /root/models
+
 	scp $(SSH_OPTIONS) skull.stl $(TARGET_USER)@$(TARGET_IP):/root/skull.stl
+	scp $(SSH_OPTIONS) golf.stl $(TARGET_USER)@$(TARGET_IP):/root/golf.stl
+	scp $(SSH_OPTIONS) golf.stl $(TARGET_USER)@$(TARGET_IP):/root/rabbit.stl
 run: copy-executable $(TARGET_EXE)
 	ssh $(SSH_OPTIONS) -t $(TARGET_USER)@$(TARGET_IP) $(TARGET_DIR)/$(TARGET_EXE)
 

@@ -21,7 +21,7 @@ directory_t* get_directory_file_names(char* dir_name, char* type);
 
 void print_dir_file_names(directory_t* directory);
 
-void display_files(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int screen_width, int screen_height);
+void display_files(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH]);
 
 void free_directory(directory_t* directory);
 

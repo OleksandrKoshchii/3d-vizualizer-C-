@@ -7,12 +7,14 @@
 #include <stdbool.h>
 #include <time.h>
 
+#include "directory.h"
 #include "knob.h"
 
 bool waiting_for_second_click = false;
 clock_t first_click_time = 0;
 
 #define DOUBLE_CLICK_TOLERANCE 0.2 // Doensn't work
+int knob_threshold = 3;
 
 knobs_t* initialize_knobs() {
     knobs_t* knobs;
@@ -42,14 +44,29 @@ void read_knobs_values(unsigned char* mem_base, knobs_t* knobs) {
 		bool lastStatus = knobs->encodersPressed[encoder];
 
 		knobs->encodersValues[encoder] = (knobs->rgb_knobs_value >> 8 * encoder) & 0xFF;
-		knobs->encodersPressed[encoder] = ((((knobs->rgb_knobs_value >> 24) >> encoder) & 0x01) == 0x01) ? true : false;
-        // Alternative
-        // knobs->encodersPressed[encoder] = ((knobs->rgb_knobs_value >> (24 + encoder)) & 0x01) == 0x01;
-		// Allegedly broken
-        // knobs->encodersSwitched[enkoder] = lastStatus - knobs->encodersPressed[enkoder] == 1 ? true : false;
+		// Original
+		// knobs->encodersPressed[encoder] = ((((knobs->rgb_knobs_value >> 24) >> encoder) & 0x01) == 0x01) ? true : false;
+        // Alternative	
+        knobs->encodersPressed[encoder] = ((knobs->rgb_knobs_value >> (24 + encoder)) & 0x01) == 0x01;
+		
 		knobs->encodersSwitched[encoder] = (lastStatus == false && knobs->encodersPressed[encoder] == true);
 
 		knobs->encodersDif[encoder] = knobs->encodersValues[encoder] - lastValue;
+	}
+}
+
+void choose_file(knobs_t* knobs, directory_t* dir) {
+	if (knobs->encodersDif[1] > knob_threshold) {
+		dir->active_file++;
+		if (dir->active_file >= dir->file_count) {
+			dir->active_file = 0;
+		}
+	}
+	if(knobs->encodersDif[1] < -knob_threshold) {
+		dir->active_file--;
+		if(dir->active_file < 0) {
+			dir->active_file = dir->file_count - 1;
+		}
 	}
 }
 

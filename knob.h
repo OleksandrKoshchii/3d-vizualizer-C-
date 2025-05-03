@@ -19,6 +19,8 @@ knobs_t* initialize_knobs();
 
 void read_knobs_values(unsigned char* mem_base, knobs_t* knobs);
 
+void choose_file(knobs_t* knobs, directory_t* dir);
+
 void check_state(int* state, knobs_t* knobs);
 
 #endif /* KNOB_UTILS_H */

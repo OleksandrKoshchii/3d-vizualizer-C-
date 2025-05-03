@@ -67,9 +67,9 @@ obj_t readBinarySTL(const char *filename) {
 	return result;
 }
 
-void free_obj(obj_t obj){
-	for(int i = 0; i < obj.quantity;i++){
-		free(obj.triangles[i]);
+void free_obj(obj_t* obj){
+	for(int i = 0; i < obj->quantity; i++){
+		free(obj->triangles[i]);
 	}
-	free(obj.triangles);
+	free(obj->triangles);
 }

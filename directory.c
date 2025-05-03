@@ -8,7 +8,6 @@
 
 #define MAX_FILES_SIZE 20
 
-
 directory_t* initialize_directory() {
     
     directory_t* directory;
@@ -74,25 +73,47 @@ void print_dir_file_names(directory_t* dir) {
     }
 }
 
-void display_files(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int screen_width, int screen_height) {
+void draw_highlighted_string(uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int x, int y, char* filename, unsigned int color) {
+    draw_char_text(buffer, x, y, '-', color); // Optional
+    draw_char_text(buffer, x, y, '>', color);
+    draw_string(buffer, x + char_width('>') + 5, y, filename, color);
+}
+void display_files(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH]) {
+    static float global_y = 0;
+    
     float file_x = 50;
     float y_indent = 20;
-    float spacer = 10;
+    float spacer = 50;
     
+    float active_y = y_indent + dir->active_file * spacer + global_y;
+
+    // Move up if active file is too close to bottom
+    if (active_y > SCREEN_HEIGHT - 50) {
+        global_y -= (active_y - (SCREEN_HEIGHT - 50));
+    }
+    // Move down if file is too close to top
+    if (active_y < 50) {
+        global_y += (50 - active_y);
+    }
+    
+    unsigned int col = hsv2rgb_lcd(200, 200, 200);
+    unsigned int col_highlighted = hsv2rgb_lcd(0, 0, 255);
+
     for(int i = 0; i < dir->file_count; i++) {
-        float file_y = y_indent + i * spacer;
+        float file_y = y_indent + i * spacer + global_y;
 
         // Check for OOB
-        if((file_x > 0 && file_x < SCREEN_WIDTH) && (file_y > 0 && file_y < SCREEN_HEIGHT)) {
+        if((file_y > 0 && file_y < SCREEN_HEIGHT)) { // might need to change the edges
             if(dir->active_file == i) {
-                draw_string(buffer, file_x, file_y, dir->file_names[i], 200);
+                draw_highlighted_string(buffer, file_x, file_y, dir->file_names[i], col_highlighted);
             }
             else {
-                draw_string(buffer, file_x, file_y, dir->file_names[i], 100);
+                draw_string(buffer, file_x, file_y, dir->file_names[i], col);
             }
         }
     }    
 }   
+
 
 void free_directory(directory_t* directory) {
 

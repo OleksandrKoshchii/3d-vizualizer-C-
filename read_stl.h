@@ -18,6 +18,6 @@ typedef struct {
 
 obj_t readBinarySTL(const char* filename);
 
-void free_obj(obj_t obj);
+void free_obj(obj_t* obj);
 
 #endif
