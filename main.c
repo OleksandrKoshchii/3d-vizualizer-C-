@@ -36,15 +36,21 @@ const int SCREEN_WIDTH = 480;
 const int SCREEN_HEIGHT = 320;
 const float FOV = 60;
 #define FPS 60
+#define MODEL "skull.stl"
+
+
+//.....painting properties.....//
+bool wireframe = false;
+uint8_t RED = 255;
+uint8_t GREEN = 255;
+uint8_t BLUE = 255;
+//.....painting properties.....//
 
 uint32_t rgb_knobs_value;
 signed char enkodersValues[3];
 signed char enkodersDif[3];
 bool enkodersPressed[3];
 bool enkodersSwitched[3];
-
-const int MODE_MAX = 1;
-
 
 void read_knobs_values(unsigned char* mem_base){
 	rgb_knobs_value = *(volatile uint32_t*)(mem_base + SPILED_REG_KNOBS_8BIT_o);
@@ -58,17 +64,14 @@ void read_knobs_values(unsigned char* mem_base){
 		enkodersSwitched[enkoder] = lastStatus - enkodersPressed[enkoder] == 1? true : false;
 
 		enkodersDif[enkoder] = enkodersValues[enkoder] - lastValue;
-		
-		
 	}
-	
 }
 
 void draw_pixel(unsigned char *parlcd_mem_base,uint16_t color){
 	parlcd_write_data(parlcd_mem_base,color);
 }
 
-draw_frame(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH],unsigned char* parlcd_mem_base){
+void draw_frame(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH],unsigned char* parlcd_mem_base){
 	parlcd_write_cmd(parlcd_mem_base, 0x2C);
 	for(int y = 0; y < SCREEN_HEIGHT; y++){
 		for(int x = 0; x < SCREEN_WIDTH; x++){
@@ -114,51 +117,67 @@ int main(int argc, char *argv[])
 
 	float light[3] = {0.f,0.f,10.f};
 
-	obj_t obj = readBinarySTL("skull.stl");
+	obj_t obj = readBinarySTL(MODEL);
 	obj_t objs[1] = {obj,};
 	uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 	
 	clock_t start = clock();
 	int fps = 0;
  
-	bool chooseMode = false;
-
-	enum Mode mode = POLYGON;
+	bool changeLightPosition = false;
+	bool changeColor = false;
 
     while (1) {
 		read_knobs_values(mem_base);
-		if(enkodersSwitched[0]) chooseMode = !chooseMode;
-
-		if(chooseMode){
-			if(enkodersDif[0] > 0){
-				mode++;
-				if(mode > MODE_MAX) mode = 0;
-			}else if(enkodersDif[0] < 0){
-				mode--;
-				if(mode < 0) mode = MODE_MAX;
+		if(enkodersSwitched[0]){ 
+			wireframe = !wireframe;
+		}else if(enkodersSwitched[1]){
+			changeLightPosition = !changeLightPosition;
+		}else if(enkodersSwitched[2]){
+			changeColor = !changeColor;
+		}
+		
+		if(changeLightPosition){
+			if(enkodersDif[0] != 0){
+				light[0] += enkodersDif[0] * 0.05f;
 			}
-			continue;
+			if(enkodersDif[1] != 0){
+				light[1] += enkodersDif[1] * 0.05f;
+			}
+			if(enkodersDif[2] != 0){
+				light[2] += enkodersDif[2] * 0.05f;
+			}
+		}else if(changeColor){
+			if(enkodersDif[0] != 0){
+				BLUE += enkodersDif[0];
+			}
+			if(enkodersDif[1] != 0){
+				GREEN += enkodersDif[1];
+			}
+			if(enkodersDif[2] != 0){
+				RED += enkodersDif[2];
+			}
+		}else{
+			if(enkodersDif[0] != 0){
+				cam.coord[0] += enkodersDif[0] * 0.05f;
+			}
+			if(enkodersDif[1] != 0){
+				rotate_obj_horizontal(&obj,enkodersDif[1]);
+			}
+			if(enkodersDif[2] != 0){
+				rotate_obj_vertical(&obj,enkodersDif[2]);
+			}
 		}
 
-
-		if(enkodersDif[0] != 0){
-			cam.coord[0] += enkodersDif[0] * 0.05f;
-		}
-		if(enkodersDif[1] != 0){
-			rotate_obj_horizontal(&obj,enkodersDif[1]);
-		}
-		if(enkodersDif[2] != 0){
-			rotate_obj_vertical(&obj,enkodersDif[2]);
-		}
-
-		printf("%d button1:%d %d %d dif: %d;   button 2:%d %d %d dif: %d;  button3:%d %d %d dif: %d\n",mode,enkodersValues[0],enkodersPressed[0],enkodersSwitched[0],enkodersDif[0],enkodersValues[1],enkodersPressed[1],enkodersSwitched[1],enkodersDif[1],enkodersValues[2],enkodersPressed[2],enkodersSwitched[2],enkodersDif[2]);
+		printf("%d button1:%d %d %d dif: %d;   button 2:%d %d %d dif: %d;  button3:%d %d %d dif: %d\n",wireframe,enkodersValues[0],enkodersPressed[0],enkodersSwitched[0],enkodersDif[0],enkodersValues[1],enkodersPressed[1],enkodersSwitched[1],enkodersDif[1],enkodersValues[2],enkodersPressed[2],enkodersSwitched[2],enkodersDif[2]);
 		
 
 		inverse(cam.orientation,cam.inv_orientation);
 		clear_buffer(pixelBuffer);
-		proj_objs(objs,1,cam,light,pixelBuffer,mode);
+		proj_objs(objs,1,cam,light,pixelBuffer);
 		draw_frame(pixelBuffer,parlcd_mem_base);
-		//cam.coord[0] += 0.01f;
+
+
 		fps++;
 		if((clock() - start)/CLOCKS_PER_SEC > 1){
 			printf("fps: %d\n",fps);
@@ -170,4 +189,3 @@ int main(int argc, char *argv[])
 
     return 0;
 }
-

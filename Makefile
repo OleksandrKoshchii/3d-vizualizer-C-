@@ -12,12 +12,12 @@ LDLIBS += -lrt -lpthread -lm
 SOURCES = main.c mzapo_phys.c mzapo_parlcd.c serialize_lock.c render.c screen_tools.c matrix_operations.c object_transformations.c read_stl.c
 #SOURCES += font_prop14x16.c font_rom8x16.c
 TARGET_EXE = vizualier3d
-TARGET_IP ?= 192.168.223.119
+TARGET_IP ?= 192.168.223.105
 ifeq ($(TARGET_IP),)
 ifneq ($(filter debug run,$(MAKECMDGOALS)),)
 $(warning The target IP address is not set)
 $(warning Run as "TARGET_IP=192.168.202.xxx make run" or modify Makefile)
-TARGET_IP ?= 192.168.223.119
+TARGET_IP ?= 192.168.223.105
 endif
 endif
 TARGET_DIR ?= /tmp/$(shell whoami)

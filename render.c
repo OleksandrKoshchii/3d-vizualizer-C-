@@ -17,6 +17,13 @@ extern const int SCREEN_WIDTH;
 extern const int SCREEN_HEIGHT;
 extern const float FOV;
 
+//.....drawing properties.....//
+extern bool wireframe;
+extern uint8_t RED;
+extern uint8_t GREEN;
+extern uint8_t BLUE;
+//.....drawing properties.....//
+
 void draw_line(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH], int x0, int y0, int x1, int y1, uint16_t color) {
     int dx = abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
     int dy = -abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
@@ -136,7 +143,7 @@ bool vec_triangle_collided(triangle_t triangle, float point[3], float direction[
     return false;
 }
 
-void proj_triangle(triangle_t triangle, camera_t cam, float light[3], bool shadow, uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH],enum Mode mode) {
+void proj_triangle(triangle_t triangle, camera_t cam, float light[3], bool shadow, uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH]) {
     float center[3];
     for (int i = 0; i < 3; i++) {
         center[i] = (triangle.vertex[0][i] + triangle.vertex[1][i] + triangle.vertex[2][i]) / 3.f;
@@ -145,7 +152,7 @@ void proj_triangle(triangle_t triangle, camera_t cam, float light[3], bool shado
     float light_dir[3] = { center[0] - light[0], center[1] - light[1], center[2] - light[2] };
     float cam_dir[3] = { center[0] - cam.coord[0], center[1] - cam.coord[1], center[2] - cam.coord[2] };
 
-    if (scalar_multiply(triangle.normal, cam_dir) >= 0)return;
+    if (scalar_multiply(triangle.normal, cam_dir) >= 0 && !wireframe)return;
 
     float sc_multiply = scalar_multiply(triangle.normal, light_dir);
     sc_multiply = -sc_multiply / (sqrt(scalar_multiply(light_dir, light_dir)) * sqrt(scalar_multiply(triangle.normal, triangle.normal)));
@@ -165,26 +172,32 @@ void proj_triangle(triangle_t triangle, camera_t cam, float light[3], bool shado
 
 	uint16_t color;
 
-	switch(mode){
-		
-		case POLYGON: 
-    	
-		color = shadow ? (uint16_t)(0b11111 * 0.2f) << 11 : (uint16_t)(0b11111 * sc_multiply)<<11;
-
-    	draw_filled_triangle(pixelBuffer, coordX[0], coordY[0], coordX[1], coordY[1], coordX[2], coordY[2], color);
-		break;
-
-		case WIREFRAME:
-
+	if(wireframe){
 		color = 0b0000011111100000;
 		draw_line(pixelBuffer,coordX[0],coordY[0],coordX[1],coordY[1],color);
 		draw_line(pixelBuffer,coordX[1],coordY[1],coordX[2],coordY[2],color);
 		draw_line(pixelBuffer,coordX[2],coordY[2],coordX[0],coordY[0],color);
+	}else{
 
+		if(shadow){
+			color = (uint16_t)((BLUE/255.f) * 0b11111) * 0.2f;
+			color |= (uint16_t)(((GREEN/255.f) * 0b111111) * 0.2f) << 5;
+			color |= (uint16_t)(((RED/255.f) * 0b11111) * 0.2f) << 11;
+		}else{
+			color = (uint16_t)((BLUE/255.f) * 0b11111) * sc_multiply;
+			color |= (uint16_t)(((GREEN/255.f) * 0b111111) * sc_multiply) << 5;
+			color |= (uint16_t)(((RED/255.f) * 0b11111) * sc_multiply) << 11;
+		}
+
+
+
+//		color = shadow ? (uint16_t)(drawingColor * 0.2f) : (uint16_t)(drawingColor * sc_multiply);
+
+    	draw_filled_triangle(pixelBuffer, coordX[0], coordY[0], coordX[1], coordY[1], coordX[2], coordY[2], color);
 	}
 }
 
-void proj_objs(obj_t* objs, int obj_quantity, camera_t cam, float light[3], uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH],enum Mode mode) {
+void proj_objs(obj_t* objs, int obj_quantity, camera_t cam, float light[3], uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH]) {
     int triangles_quantity = 0;
     for (int i = 0; i < obj_quantity; i++)
         triangles_quantity += objs[i].quantity;
@@ -253,7 +266,7 @@ void proj_objs(obj_t* objs, int obj_quantity, camera_t cam, float light[3], uint
             }
         }
 
-        proj_triangle(*triangles[i], cam, light, shadow, pixelBuffer,mode);
+        proj_triangle(*triangles[i], cam, light, shadow, pixelBuffer);
     }
 
     free(triangles);
