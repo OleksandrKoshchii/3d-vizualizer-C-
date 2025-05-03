@@ -9,15 +9,15 @@ LDFLAGS += -static
 LDLIBS += -lrt -lpthread -lm
 #LDLIBS += -lm
 
-SOURCES = main.c mzapo_phys.c mzapo_parlcd.c serialize_lock.c render.c screen_tools.c matrix_operations.c object_transformations.c read_stl.c
-#SOURCES += font_prop14x16.c font_rom8x16.c
+SOURCES = main.c mzapo_phys.c mzapo_parlcd.c serialize_lock.c render.c screen_tools.c matrix_operations.c object_transformations.c read_stl.c directories.c text.c
+SOURCES += font_prop14x16.c font_rom8x16.c
 TARGET_EXE = vizualier3d
-TARGET_IP ?= 192.168.223.119
+TARGET_IP ?= 192.168.223.105
 ifeq ($(TARGET_IP),)
 ifneq ($(filter debug run,$(MAKECMDGOALS)),)
 $(warning The target IP address is not set)
 $(warning Run as "TARGET_IP=192.168.202.xxx make run" or modify Makefile)
-TARGET_IP ?= 192.168.223.119
+TARGET_IP ?= 192.168.223.105
 endif
 endif
 TARGET_DIR ?= /tmp/$(shell whoami)
@@ -25,8 +25,8 @@ TARGET_USER ?= root
 # for use from Eduroam network use TARGET_IP=localhost and enable next line
 #SSH_OPTIONS=-o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" -o "Port=2222"
 #SSH_GDB_TUNNEL_REQUIRED=y
-SSH_OPTIONS=-i /home/oleksandr/cprog/apo/mzapo_template/mzapo-root-key
-SSH_OPTIONS+=-o 'ProxyJump=koshcol1@postel.felk.cvut.cz'
+SSH_OPTIONS=-i /home/sir/.ssh/mzapo-root-key
+SSH_OPTIONS+=-o 'ProxyJump=dankoyar@postel.felk.cvut.cz'
 
 OBJECTS += $(filter %.o,$(SOURCES:%.c=%.o))
 OBJECTS += $(filter %.o,$(SOURCES:%.cpp=%.o))
