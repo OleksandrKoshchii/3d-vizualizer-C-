@@ -78,6 +78,7 @@ void draw_highlighted_string(uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int x
     draw_char_text(buffer, x, y, '>', color);
     draw_string(buffer, x + char_width('>') + 5, y, filename, color);
 }
+
 void display_files(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH]) {
     static float global_y = 0;
     
@@ -88,12 +89,12 @@ void display_files(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH
     float active_y = y_indent + dir->active_file * spacer + global_y;
 
     // Move up if active file is too close to bottom
-    if (active_y > SCREEN_HEIGHT - 50) {
-        global_y -= (active_y - (SCREEN_HEIGHT - 50));
+    if (active_y > SCREEN_HEIGHT - spacer) {
+        global_y -= (active_y - (SCREEN_HEIGHT - spacer));
     }
     // Move down if file is too close to top
-    if (active_y < 50) {
-        global_y += (50 - active_y);
+    if (active_y < spacer) {
+        global_y += (spacer - active_y);
     }
     
     unsigned int col = hsv2rgb_lcd(200, 200, 200);
@@ -112,7 +113,46 @@ void display_files(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH
             }
         }
     }    
-}   
+}
+
+void display_files_centered(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH]) {
+    static float global_y = 0;
+    
+    float file_x = SCREEN_WIDTH / 2;
+    float y_indent = 20;
+    float spacer = 50;
+    
+    float active_y = y_indent + dir->active_file * spacer + global_y;
+
+    // Move up if active file is too close to bottom
+    if (active_y > SCREEN_HEIGHT - spacer) {
+        global_y -= (active_y - (SCREEN_HEIGHT - spacer));
+    }
+    // Move down if file is too close to top
+    if (active_y < spacer) {
+        global_y += (spacer - active_y);
+    }
+    
+    unsigned int col = hsv2rgb_lcd(200, 200, 200);
+    unsigned int col_highlighted = hsv2rgb_lcd(0, 0, 255);
+
+    for(int i = 0; i < dir->file_count; i++) {
+        float file_y = y_indent + i * spacer + global_y;
+
+        // Check for OOB
+        if((file_y > 0 && file_y < SCREEN_HEIGHT)) { // might need to change the edges
+            int str_width = string_width(dir->file_names[i]);
+            int x_indent = file_x - str_width / 2;
+
+            if(dir->active_file == i) {
+                draw_highlighted_string(buffer, x_indent, file_y, dir->file_names[i], col_highlighted);
+            }
+            else {
+                draw_string(buffer, x_indent, file_y, dir->file_names[i], col);
+            }
+        }
+    }    
+}
 
 
 void free_directory(directory_t* directory) {

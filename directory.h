@@ -23,6 +23,8 @@ void print_dir_file_names(directory_t* directory);
 
 void display_files(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH]);
 
+void display_files_centered(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH]);
+
 void free_directory(directory_t* directory);
 
 #endif /* DIRECTORY_H */
