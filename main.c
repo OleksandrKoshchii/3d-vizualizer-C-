@@ -35,6 +35,7 @@
 
 #include "directory.h"
 #include "text.h"
+#include "knob.h"
 #include "font_types.h"
 
 const int SCREEN_WIDTH = 480;
@@ -42,16 +43,10 @@ const int SCREEN_HEIGHT = 320;
 const float FOV = 60;
 #define FPS 60
 
-uint32_t rgb_knobs_value;
-signed char encodersValues[3];
-signed char encodersDif[3];
-bool encodersPressed[3];
-bool encodersSwitched[3];
+
 
 const int MODE_MAX = 1;
 //-----------------------------------
-bool waiting_for_second_click = false;
-clock_t first_click_time = 0;
 
 char* model = "skull.stl";
 #define DOUBLE_CLICK_TOLERANCE 0.2 // Doensn't work
@@ -61,12 +56,11 @@ char* model = "skull.stl";
 int state = 0;
 font_descriptor_t *fdes;
 
-void read_knobs_values(unsigned char* mem_base);
 void draw_pixel(unsigned char *parlcd_mem_base,uint16_t color);
-draw_frame(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH],unsigned char* parlcd_mem_base);
+void draw_frame(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH],unsigned char* parlcd_mem_base);
 void clear_buffer(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH]);
-void check_state(int* state);
-void print_stats(enum Mode mode, int* fps, clock_t* start);
+void print_stats(enum Mode mode, int* fps, clock_t* start, knobs_t* knobs);
+
 
 int main(int argc, char *argv[])
 {
@@ -80,13 +74,15 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+	// Initialize knobs
+	knobs_t* knobs = initialize_knobs();
+
     parlcd_hx8357_init(parlcd_mem_base);
 
     struct timespec delay;
     delay.tv_sec = 0;
     delay.tv_nsec = 1000000000 / FPS;
 
-		
 	camera_t cam = {
 		{-3,0,0.5f},
 		{
@@ -118,7 +114,7 @@ int main(int argc, char *argv[])
 			case 0:
 				while (state == 0) {
 
-					read_knobs_values(mem_base);
+					read_knobs_values(mem_base, knobs);
 
 					print_dir_file_names(dir);
 					// display_files();
@@ -127,8 +123,8 @@ int main(int argc, char *argv[])
 					
 					// Doesn't work
 					unsigned int col = hsv2rgb_lcd(155, 155, 155);
-					draw_char(100, 100, 'g', col);
-					draw_char(200, 200, 'g', col);
+					draw_char_test(pixelBuffer, 100, 100, 'g', col);
+					draw_char_test(pixelBuffer, 200, 200, 'g', col);
 
 					draw_frame(pixelBuffer, parlcd_mem_base);
 					
@@ -137,35 +133,35 @@ int main(int argc, char *argv[])
 					i++;
 					clock_nanosleep(CLOCK_MONOTONIC, 0, &delay, NULL);
 
-					check_state(&state);
+					check_state(&state, knobs);
 				}
 				break;
 			case 1:
 				while (state == 1) {
-					read_knobs_values(mem_base);
-					if(encodersSwitched[0]) chooseMode = !chooseMode;
+					read_knobs_values(mem_base, knobs);
+					if(knobs->encodersSwitched[0]) chooseMode = !chooseMode;
 
 					if(chooseMode) {
-						if (encodersDif[0] > 0) {
+						if (knobs->encodersDif[0] > 0) {
 							mode++;
 							if(mode > MODE_MAX) mode = 0;
-						} else if(encodersDif[0] < 0) {
+						} else if(knobs->encodersDif[0] < 0) {
 							mode--;
 							if(mode < 0) mode = MODE_MAX;
 						}
 					}
 
-					if(encodersDif[0] != 0) {
-						cam.coord[0] += encodersDif[0] * 0.05f;
+					if(knobs->encodersDif[0] != 0) {
+						cam.coord[0] += knobs->encodersDif[0] * 0.05f;
 					}
-					if(encodersDif[1] != 0) {
-						rotate_obj_horizontal(&obj,encodersDif[1]);
+					if(knobs->encodersDif[1] != 0) {
+						rotate_obj_horizontal(&obj, knobs->encodersDif[1]);
 					}
-					if(encodersDif[2] != 0) {
-						rotate_obj_vertical(&obj,encodersDif[2]);
+					if(knobs->encodersDif[2] != 0) {
+						rotate_obj_vertical(&obj, knobs->encodersDif[2]);
 					}
 
-					print_stats(mode, &fps, &start);
+					print_stats(mode, &fps, &start, knobs);
 
 					inverse(cam.orientation, cam.inv_orientation);
 					clear_buffer(pixelBuffer);
@@ -175,37 +171,27 @@ int main(int argc, char *argv[])
 
 					clock_nanosleep(CLOCK_MONOTONIC, 0, &delay, NULL);
 
-					check_state(&state);
+					check_state(&state, knobs);
 				}
 				break;
 		}
     }
 
-	// free_directory(dir);
+	free_obj(obj);
+	free(knobs);
+	free_directory(dir);
+	munmap_phys_address(mem_base, SPILED_REG_SIZE);
+	munmap_phys_address(parlcd_mem_base, PARLCD_REG_SIZE);
+
     return 0;
 }
 
-void read_knobs_values(unsigned char* mem_base) {
-	rgb_knobs_value = *(volatile uint32_t*)(mem_base + SPILED_REG_KNOBS_8BIT_o);
-	for(int enkoder = 0; enkoder < 3; enkoder++){
-		
-		signed char lastValue = encodersValues[enkoder];
-		bool lastStatus = encodersPressed[enkoder];
-
-		encodersValues[enkoder] = (rgb_knobs_value >> 8 * enkoder) & 0xFF;
-		encodersPressed[enkoder] = ((rgb_knobs_value >> 24) >> enkoder) & 0x01 == 0x01 ? true : false;
-		// encodersSwitched[enkoder] = lastStatus - encodersPressed[enkoder] == 1 ? true : false;
-		encodersSwitched[enkoder] = (lastStatus == false && encodersPressed[enkoder] == true);
-
-		encodersDif[enkoder] = encodersValues[enkoder] - lastValue;
-	}
-}
 
 void draw_pixel(unsigned char *parlcd_mem_base,uint16_t color) {
-	parlcd_write_data(parlcd_mem_base,color);
+	parlcd_write_data(parlcd_mem_base, color);
 }
 
-draw_frame(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH],unsigned char* parlcd_mem_base) {
+void draw_frame(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH],unsigned char* parlcd_mem_base) {
 	parlcd_write_cmd(parlcd_mem_base, 0x2C);
 	for(int y = 0; y < SCREEN_HEIGHT; y++){
 		for(int x = 0; x < SCREEN_WIDTH; x++){
@@ -214,38 +200,8 @@ draw_frame(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH],unsigned char* parl
 	}
 }
 
-void clear_buffer(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH]) {
-	for(int i = 0; i < SCREEN_HEIGHT;i++){
-		for(int j = 0; j < SCREEN_WIDTH; j++){
-			pixelBuffer[i][j] = 0x00;
-		}
-	}
-}
-
-void check_state(int* state) {
-	if(encodersSwitched[1]) {
-		first_click_time = clock();
-		if(!waiting_for_second_click) {
-			waiting_for_second_click = true;
-		}
-		else {
-			if(encodersSwitched[1]) {
-				double elapsed = ((clock() - first_click_time) / CLOCKS_PER_SEC);
-				if(elapsed < DOUBLE_CLICK_TOLERANCE) {
-					*state = (*state == 0) ? 1 : 0;
-				}
-				waiting_for_second_click = false;
-			}
-		}
-	}
-	//Reset if too late
-	if(waiting_for_second_click && ((clock() - first_click_time) / CLOCKS_PER_SEC > DOUBLE_CLICK_TOLERANCE)) {
-		waiting_for_second_click = false;
-	}
-}
-
-void print_stats(enum Mode mode, int* fps, clock_t* start) {
-	printf("%d B1: angle-%d pressed-%d switched-%d dif: %d;   B2: angle:%d pressed:%d switched:%d dif: %d;   B3: angle:%d pressed:%d switched:%d dif: %d\n",mode,encodersValues[0],encodersPressed[0],encodersSwitched[0],encodersDif[0],encodersValues[1],encodersPressed[1],encodersSwitched[1],encodersDif[1],encodersValues[2],encodersPressed[2],encodersSwitched[2],encodersDif[2]);
+void print_stats(enum Mode mode, int* fps, clock_t* start, knobs_t* knobs) {
+	printf("%d B1: angle-%d pressed-%d switched-%d dif: %d;   B2: angle:%d pressed:%d switched:%d dif: %d;   B3: angle:%d pressed:%d switched:%d dif: %d\n", mode, knobs->encodersValues[0], knobs->encodersPressed[0], knobs->encodersSwitched[0], knobs->encodersDif[0], knobs->encodersValues[1], knobs->encodersPressed[1], knobs->encodersSwitched[1], knobs->encodersDif[1], knobs->encodersValues[2], knobs->encodersPressed[2], knobs->encodersSwitched[2], knobs->encodersDif[2]);
 	
 	(*fps)++;
 
@@ -253,5 +209,13 @@ void print_stats(enum Mode mode, int* fps, clock_t* start) {
 		printf("fps: %d\n", *fps);
 		*fps = 0;
 		*start = clock();
+	}
+}
+
+void clear_buffer(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH]) {
+	for(int i = 0; i < SCREEN_HEIGHT;i++){
+		for(int j = 0; j < SCREEN_WIDTH; j++){
+			pixelBuffer[i][j] = 0x00;
+		}
 	}
 }
