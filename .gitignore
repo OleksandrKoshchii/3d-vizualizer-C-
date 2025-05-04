@@ -2,3 +2,8 @@
 depend
 change_me
 connect.gdb
+.vscode/
+*.stl
+models/
+visualizer3d
+directory_test.c
