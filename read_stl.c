@@ -6,24 +6,33 @@
 #define DIMENSION 3
 #define VERTICES_QUANTITY 3
 
+size_t fread_check(void *ptr, size_t size, size_t count, FILE *stream) {
+    size_t read = fread(ptr, size, count, stream);
+    if (read != count) {
+        fprintf(stderr, "ERROR: fread expected %zu items, got %zu\n", count, read);
+		exit(EXIT_FAILURE);
+    }
+    return read;
+}
+
 obj_t readBinarySTL(const char *filename) {
     FILE *file = fopen(filename, "rb");
     if (!file) {
         perror("ERROR: Unable to open file\n");
-        exit(-2);
+        exit(EXIT_FAILURE);
     }
 
     char header[80];
-    fread(header, sizeof(char), 80, file); // Чтение заголовка
+    fread_check(header, sizeof(char), 80, file);// Read hedaerusus
 
     unsigned int numTriangles;
-    fread(&numTriangles, sizeof(unsigned int), 1, file); // Чтение количества треугольников
+    fread_check(&numTriangles, sizeof(unsigned int), 1, file); // Read number of triangles
 
 	triangle_t** triangles = (triangle_t**)malloc(numTriangles * sizeof(triangle_t*));
 
 	if(!triangles){
 		fprintf(stderr,"ERROR: malloc!\n");
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 
     for (unsigned int i = 0; i < numTriangles; i++) {
@@ -34,11 +43,11 @@ obj_t readBinarySTL(const char *filename) {
 		}
 
 
-        fread(&triangle->normal, sizeof(float), 3, file);
-        fread(&triangle->vertex[0], sizeof(float), 3, file);
-        fread(&triangle->vertex[1], sizeof(float), 3, file);
-        fread(&triangle->vertex[2], sizeof(float), 3, file);
-        fread(&triangle->attributeByteCount, sizeof(unsigned short), 1, file);
+        fread_check(&triangle->normal, sizeof(float), 3, file);
+        fread_check(&triangle->vertex[0], sizeof(float), 3, file);
+        fread_check(&triangle->vertex[1], sizeof(float), 3, file);
+        fread_check(&triangle->vertex[2], sizeof(float), 3, file);
+        fread_check(&triangle->attributeByteCount, sizeof(unsigned short), 1, file);
 
 		triangles[i] = triangle;
     }
@@ -73,3 +82,4 @@ void free_obj(obj_t* obj){
 	}
 	free(obj->triangles);
 }
+
