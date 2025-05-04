@@ -13,7 +13,6 @@
 #include "mzapo_regs.h"
 #include "font_types.h"
  
-// when using makefile
 extern const int SCREEN_WIDTH;
 extern const int SCREEN_HEIGHT;
 extern font_descriptor_t *fdes;

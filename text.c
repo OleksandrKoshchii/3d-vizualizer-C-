@@ -12,8 +12,6 @@
 
 #include "text.h"
 
-unsigned short fb[320 * 480 * 2];
-font_descriptor_t *fdes = NULL;
 int scale = 2;
 
 unsigned int hsv2rgb_lcd(int hue, int saturation, int value) {

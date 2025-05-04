@@ -6,8 +6,6 @@
 
 #include "directory.h"
 
-#define MAX_FILES_SIZE 20
-
 directory_t* initialize_directory() {
     
     directory_t* directory;
@@ -89,12 +87,14 @@ void display_files(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH
     float active_y = y_indent + dir->active_file * spacer + global_y;
 
     // Move up if active file is too close to bottom
-    if (active_y > SCREEN_HEIGHT - spacer) {
+    while (active_y > SCREEN_HEIGHT - spacer) {
         global_y -= (active_y - (SCREEN_HEIGHT - spacer));
+        active_y = y_indent + dir->active_file * spacer + global_y;
     }
     // Move down if file is too close to top
-    if (active_y < spacer) {
+    while (active_y < spacer) {
         global_y += (spacer - active_y);
+        active_y = y_indent + dir->active_file * spacer + global_y;
     }
     
     unsigned int col = hsv2rgb_lcd(200, 200, 200);
@@ -141,8 +141,7 @@ void display_files_centered(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCR
 
         // Check for OOB
         if((file_y > 0 && file_y < SCREEN_HEIGHT)) { // might need to change the edges
-            int str_width = string_width(dir->file_names[i]);
-            int x_indent = file_x - str_width / 2;
+            int x_indent = file_x - string_width(dir->file_names[i]) / 2;
 
             if(dir->active_file == i) {
                 draw_highlighted_string(buffer, x_indent, file_y, dir->file_names[i], col_highlighted);
@@ -153,7 +152,6 @@ void display_files_centered(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCR
         }
     }    
 }
-
 
 void free_directory(directory_t* directory) {
 

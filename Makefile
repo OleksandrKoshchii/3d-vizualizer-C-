@@ -9,9 +9,9 @@ LDFLAGS += -static
 LDLIBS += -lrt -lpthread -lm
 #LDLIBS += -lm
 
-SOURCES = main.c mzapo_phys.c mzapo_parlcd.c serialize_lock.c render.c screen_tools.c matrix_operations.c object_transformations.c read_stl.c directory.c text.c knob.c
+SOURCES = main.c mzapo_phys.c mzapo_parlcd.c serialize_lock.c render.c screen_tools.c matrix_operations.c object_transformations.c read_stl.c directory.c text.c knob.c main_utils.c
 SOURCES += font_prop14x16.c font_rom8x16.c
-TARGET_EXE = vizualier3d
+TARGET_EXE = visualizer3d
 TARGET_IP ?= 192.168.223.105
 ifeq ($(TARGET_IP),)
 ifneq ($(filter debug run,$(MAKECMDGOALS)),)
