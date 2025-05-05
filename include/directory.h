@@ -10,6 +10,7 @@
 #include "text.h"
 
 #define MAX_FILES_SIZE 20
+#define CHAR_HEIGHT 16
 
 typedef struct directory_t {
     char* file_names[MAX_FILES_SIZE];
@@ -21,9 +22,9 @@ directory_t* get_directory_file_names(char* dir_name, char* type);
 
 void print_dir_file_names(directory_t* directory);
 
-void display_files(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH]);
+void display_files(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int scale);
 
-void display_files_centered(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH]);
+void display_files_centered(directory_t* dir, uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int scale);
 
 void free_directory(directory_t* directory);
 

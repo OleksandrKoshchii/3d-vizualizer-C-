@@ -12,8 +12,6 @@
 
 #include "text.h"
 
-int scale = 2;
-
 unsigned int hsv2rgb_lcd(int hue, int saturation, int value) {
     hue = (hue%360);    
     float f = ((hue%60)/60.0);
@@ -46,10 +44,10 @@ void draw_pixel_text(uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int x, int y,
     }
 }
 
-void draw_pixel_text_big(uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int x, int y, unsigned short color) {
+void draw_pixel_text_big(uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int x, int y, unsigned short color, int scale) {
     int i,j;
-    for (i=0; i<scale; i++) {
-        for (j=0; j<scale; j++) {
+    for (i=0; i < scale; i++) {
+        for (j=0; j < scale; j++) {
             draw_pixel_text(buffer, x+i, y+j, color);
         }
     }
@@ -80,7 +78,7 @@ int string_width(char* string) {
     return width;
 }
 
-void draw_char_text(uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int x, int y, char ch, unsigned short color) {
+void draw_char_text(uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int x, int y, char ch, unsigned short color, int scale) {
     if (!fdes) {
         fprintf(stderr, "Font not initialized!\n");
         return;
@@ -100,7 +98,7 @@ void draw_char_text(uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int x, int y, 
             font_bits_t val = *ptr;
             for (j=0; j<w; j++) {
                 if ((val&0x8000)!=0) {
-                    draw_pixel_text_big(buffer, x+scale*j, y+scale*i, color);
+                    draw_pixel_text_big(buffer, x+scale*j, y+scale*i, color, scale);
                 }
                 val<<=1;
             }
@@ -109,10 +107,10 @@ void draw_char_text(uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int x, int y, 
     }
 }
 
-void draw_string(uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int x, int y, char* string, unsigned short color) {
+void draw_string(uint16_t buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int x, int y, char* string, unsigned short color, int scale) {
     int pos_x = x;
     for (int i = 0; string[i] != '\0'; i++) {
-        draw_char_text(buffer, pos_x, y, string[i], color);
+        draw_char_text(buffer, pos_x, y, string[i], color, scale);
         pos_x += char_width(string[i]) * scale;
     }
 }
