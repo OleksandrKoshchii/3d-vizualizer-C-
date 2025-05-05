@@ -12,9 +12,8 @@
 #include "directory.h"
 #include "knob.h"
 
-bool waiting_for_second_click = false;
 clock_t first_click_time = 0;
-int knob_threshold = 3;
+int knob_threshold = 2;
 
 knobs_t* initialize_knobs() {
     knobs_t* knobs;
@@ -29,7 +28,8 @@ knobs_t* initialize_knobs() {
         knobs->encoders_diff[i] = 0;
         knobs->encoders_pressed[i] = false;
         knobs->encoders_switched[i] = false;
-    }
+		knobs->waiting_for_doubleclick[i] = false;
+	}
     knobs->rgb_knobs_value = 0;
 
     return knobs;
@@ -55,6 +55,37 @@ void read_knobs_values(unsigned char* mem_base, knobs_t* knobs) {
 	}
 }
 
+bool detect_doubleclick(knobs_t* knobs, int knob_index) {
+	if(knob_index >= NUM_KNOBS) {
+		fprintf(stderr, "ERROR: knob_index: %d is out of range!\n", knob_index);
+		return false;
+	}
+
+	if(knobs->encoders_switched[knob_index]) {
+		first_click_time = clock();
+		if(!knobs->waiting_for_doubleclick[knob_index]) {
+			knobs->waiting_for_doubleclick[knob_index] = true;
+		}
+		else {
+            // Second click detected
+            double elapsed = ((clock() - first_click_time) / CLOCKS_PER_SEC);
+            printf("Elapsed: %f\n", elapsed);
+
+            if(elapsed < DOUBLECLICK_TOLERANCE) {
+                return true;
+            }
+            knobs->waiting_for_doubleclick[knob_index] = false;
+        }
+	}
+
+	//Reset if too late
+	if(knobs->waiting_for_doubleclick[knob_index] && ((clock() - first_click_time) / CLOCKS_PER_SEC > DOUBLECLICK_TOLERANCE)) {
+		knobs->waiting_for_doubleclick[knob_index] = false;
+	}
+
+	return false;
+}
+
 void choose_file(knobs_t* knobs, directory_t* dir) {
 	if (knobs->encoders_diff[1] > knob_threshold) {
 		dir->active_file++;
@@ -71,36 +102,8 @@ void choose_file(knobs_t* knobs, directory_t* dir) {
 }
 
 void switch_state(int* state, knobs_t* knobs) {
-	if(knobs->encoders_switched[1]) {
-		first_click_time = clock();
-		if(!waiting_for_second_click) {
-			waiting_for_second_click = true;
-		}
-		// else {
-		// 	if(knobs->encoders_switched[1]) {
-        //         double elapsed = ((clock() - first_click_time) / CLOCKS_PER_SEC);  
-        //         // DEBUG
-        //         printf("Elapsed: %f\n", elapsed);
-		// 		if(elapsed < DOUBLE_CLICK_TOLERANCE) {
-		// 			*state = (*state == 0) ? 1 : 0;
-		// 		}
-		// 		waiting_for_second_click = false;
-		// 	}
-		// }
-		else {
-            // Second click detected
-            double elapsed = ((clock() - first_click_time) / CLOCKS_PER_SEC);
-            printf("Elapsed: %f\n", elapsed);
-
-            if(elapsed < DOUBLE_CLICK_TOLERANCE) {
-                *state = (*state == 0) ? 1 : 0;
-            }
-            waiting_for_second_click = false;
-        }
-	}
-	//Reset if too late
-	if(waiting_for_second_click && ((clock() - first_click_time) / CLOCKS_PER_SEC > DOUBLE_CLICK_TOLERANCE)) {
-		waiting_for_second_click = false;
+	if(detect_doubleclick(knobs, 1)) {
+		*state = (*state == 0) ? 1 : 0;
 	}
 }
 
