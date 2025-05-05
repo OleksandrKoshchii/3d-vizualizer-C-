@@ -81,14 +81,14 @@ copy-executable: $(TARGET_EXE)
 	
 	ssh $(SSH_OPTIONS) $(TARGET_USER)@$(TARGET_IP) mkdir -p /root/models
 
-	scp $(SSH_OPTIONS) skull.stl $(TARGET_USER)@$(TARGET_IP):/root/skull.stl
-	scp $(SSH_OPTIONS) golf.stl $(TARGET_USER)@$(TARGET_IP):/root/golf.stl
-	scp $(SSH_OPTIONS) golf.stl $(TARGET_USER)@$(TARGET_IP):/root/rabbit.stl
+	scp $(SSH_OPTIONS) *.stl $(TARGET_USER)@$(TARGET_IP):/root/
+	
 run: copy-executable $(TARGET_EXE)
 	ssh $(SSH_OPTIONS) -t $(TARGET_USER)@$(TARGET_IP) $(TARGET_DIR)/$(TARGET_EXE)
 
 copy-test-file:
-	scp $(SSH_OPTIONS) skull.stl $(TARGET_USER)@$(TARGET_IP):/root/skull.stl
+	scp $(SSH_OPTIONS) *.stl $(TARGET_USER)@$(TARGET_IP):/root/
+	
 	ssh $(SSH_OPTIONS) -t $(TARGET_USER)@$(TARGET_IP) ls -l /root/skull.stl
 ifneq ($(filter -o ProxyJump=,$(SSH_OPTIONS))$(SSH_GDB_TUNNEL_REQUIRED),)
 SSH_GDB_PORT_FORWARD=-L 12345:127.0.0.1:12345

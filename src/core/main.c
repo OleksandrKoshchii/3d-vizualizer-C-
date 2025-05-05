@@ -12,8 +12,8 @@
  *******************************************************************/
 #define _POSIX_C_SOURCE 200112L
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
 #include <stdbool.h>
@@ -23,21 +23,22 @@
 #include "mzapo_regs.h"
 
 #include "matrix_operations.h"
-#include "knob.h"
-#include "text.h"
-#include "directory.h"
 #include "font_types.h"
+#include "directory.h"
 #include "main_utils.h"
+#include "text.h"
+#include "knob.h"
 
 const int SCREEN_WIDTH = 480;
 const int SCREEN_HEIGHT = 320;
 const float FOV = 60;
+const int MODE_MAX = 1;
+const int menu_scale = 4;
+const int viewer_scale = 2;
 #define FPS 60
 
-const int MODE_MAX = 1;
 //-----------------------------------
 
-// char* curent_object = "golf.stl";
 char* current_object = "";
 #define CURRENT_DIRECTORY "."
 #define FILE_TYPE ".stl"
@@ -60,7 +61,7 @@ int main(int argc, char *argv[])
 	struct timespec delay;
     delay.tv_sec = 0;
     delay.tv_nsec = 1000000000 / FPS;
-	uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH];
+	uint16_t pixel_buffer[SCREEN_HEIGHT][SCREEN_WIDTH];
 	
 	clock_t start = clock();
 	int fps = 0;
@@ -93,16 +94,17 @@ int main(int argc, char *argv[])
 
 					read_knobs_values(mem_base, knobs);
 					
-					clear_buffer(pixelBuffer);
+					clear_buffer(pixel_buffer);
 					
-					display_files(dir, pixelBuffer);
+					// display_files(dir, pixel_buffer, menu_scale);
+					display_files_centered(dir, pixel_buffer, menu_scale);
 					
 					choose_file(knobs, dir);
 					object_to_load = dir->file_names[dir->active_file];
 
-					draw_frame(pixelBuffer, parlcd_mem_base);
+					draw_frame(pixel_buffer, parlcd_mem_base);
 					
-					print_stats(mode, &fps, &start, knobs);
+					// print_stats(mode, &fps, &start, knobs);
 					
 					clock_nanosleep(CLOCK_MONOTONIC, 0, &delay, NULL);
 					
@@ -118,6 +120,7 @@ int main(int argc, char *argv[])
 						free_obj(&obj);
 						obj = load_object(object_to_load);
 						objs[0] = obj;
+						current_object = object_to_load;
 					}
 
 					read_knobs_values(mem_base, knobs);
@@ -127,13 +130,16 @@ int main(int argc, char *argv[])
 					check_mode(&mode, choose_mode, knobs);
 
 					check_rotation(&obj, &cam, knobs);
+					
+					clear_buffer(pixel_buffer);
 
 					print_stats(mode, &fps, &start, knobs);
-
+					
 					inverse(cam.orientation, cam.inv_orientation);
-					clear_buffer(pixelBuffer);
-					proj_objs(objs, 1, cam, light, pixelBuffer, mode);
-					draw_frame(pixelBuffer, parlcd_mem_base);
+					proj_objs(objs, 1, cam, light, pixel_buffer, mode);
+					
+					draw_fps(pixel_buffer, &fps, viewer_scale);
+					draw_frame(pixel_buffer, parlcd_mem_base);
 					// cam.coord[0] += 0.01f;
 
 					clock_nanosleep(CLOCK_MONOTONIC, 0, &delay, NULL);
@@ -147,7 +153,6 @@ int main(int argc, char *argv[])
 	free(knobs);
 	free_obj(&obj);
 	free_directory(dir);
-	free(current_object);
     
 	return 0;
 }
