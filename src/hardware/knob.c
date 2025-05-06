@@ -69,7 +69,7 @@ bool detect_doubleclick(knobs_t* knobs, int knob_index) {
 		else {
             // Second click detected
             double elapsed = ((clock() - first_click_time) / CLOCKS_PER_SEC);
-            printf("Elapsed: %f\n", elapsed);
+            // printf("Elapsed: %f\n", elapsed);
 
             if(elapsed < DOUBLECLICK_TOLERANCE) {
                 return true;
@@ -83,6 +83,14 @@ bool detect_doubleclick(knobs_t* knobs, int knob_index) {
 		knobs->waiting_for_doubleclick[knob_index] = false;
 	}
 
+	return false;
+}
+
+bool check_shutdown(bool* running, knobs_t* knobs) {
+	if(knobs->encoders_switched[2]) {
+		*running = false;
+		return true;
+	}
 	return false;
 }
 

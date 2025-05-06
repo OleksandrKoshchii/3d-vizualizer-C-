@@ -12,8 +12,6 @@
 #define NUM_KNOBS 3
 extern const int MODE_MAX;
 
-
-
 typedef struct knobs_t {
     uint32_t rgb_knobs_value;
     signed char encoders_values[NUM_KNOBS];
@@ -28,6 +26,8 @@ knobs_t* initialize_knobs();
 void read_knobs_values(unsigned char* mem_base, knobs_t* knobs);
 
 bool detect_doubleclick(knobs_t* knobs, int knob_index);
+
+bool check_shutdown(bool* running, knobs_t* knobs);
 
 void choose_file(knobs_t* knobs, directory_t* dir);
 

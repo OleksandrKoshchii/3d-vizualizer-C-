@@ -4,6 +4,6 @@ change_me
 connect.gdb
 .vscode/
 *.stl
+*_test.c
 models/
 visualizer3d
-directory_test.c

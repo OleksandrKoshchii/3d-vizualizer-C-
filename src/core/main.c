@@ -79,8 +79,8 @@ int main(int argc, char *argv[])
 	
 	float light[3] = {0.f,0.f,10.f};
 	
-	// fdes = &font_winFreeSystem14x16;
-	fdes = &font_rom8x16;
+	fdes = &font_winFreeSystem14x16;
+	// fdes = &font_rom8x16;
 	
 	obj_t obj = {0};
 	obj_t objs[1];
@@ -91,10 +91,9 @@ int main(int argc, char *argv[])
 			case 0:
 				while (state == 0) {
 					// Main menu loop
+					clear_buffer(pixel_buffer);
 
 					read_knobs_values(mem_base, knobs);
-					
-					clear_buffer(pixel_buffer);
 					
 					display_files_centered(dir, pixel_buffer, menu_scale);
 					
@@ -107,12 +106,20 @@ int main(int argc, char *argv[])
 					
 					clock_nanosleep(CLOCK_MONOTONIC, 0, &delay, NULL);
 					
+					if(check_shutdown(&running, knobs)) {
+						clear_buffer(pixel_buffer);
+						draw_frame(pixel_buffer, parlcd_mem_base);
+						break;
+					}
+						
+
 					switch_state(&state, knobs);
 				}
 				break;
 			case 1:
 				while (state == 1) {
 					// 3D model viewing loop
+					clear_buffer(pixel_buffer);
 
 					if(strcmp(current_object, object_to_load) != 0) {
 						// Load a new object
@@ -129,7 +136,6 @@ int main(int argc, char *argv[])
 
 					check_rotation(&obj, &cam, knobs);
 					
-					clear_buffer(pixel_buffer);
 					
 					
 					inverse(cam.orientation, cam.inv_orientation);
