@@ -56,10 +56,12 @@ void print_stats(enum Mode mode, int* fps, clock_t* start, knobs_t* knobs) {
 	}
 }
 
-void draw_fps(uint16_t pixel_buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int* fps, int scale) {
-	// Needs a fix
-	char fps_str[20];
-	snprintf(fps_str, sizeof(fps_str), "FPS: %d", *fps);
+void draw_fps(uint16_t pixel_buffer[SCREEN_HEIGHT][SCREEN_WIDTH], clock_t* start, int* fps, int scale) {
+	static char fps_str[20] = "--";
+	if((clock() - (*start)) / CLOCKS_PER_SEC > 1) {
+		// Needs a fix
+		snprintf(fps_str, sizeof(fps_str), "FPS: %d", *fps);
+	}
 	unsigned int col = hsv2rgb_lcd(0, 0, 255);
 	draw_string(pixel_buffer, 20, 260, fps_str, col, scale);
 }

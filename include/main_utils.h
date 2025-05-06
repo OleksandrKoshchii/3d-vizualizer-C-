@@ -20,7 +20,7 @@ void clear_buffer(uint16_t pixel_buffer[SCREEN_HEIGHT][SCREEN_WIDTH]);
 
 void print_stats(enum Mode mode, int* fps, clock_t* start, knobs_t* knobs);
 
-void draw_fps(uint16_t pixel_buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int* fps, int sclae);
+void draw_fps(uint16_t pixel_buffer[SCREEN_HEIGHT][SCREEN_WIDTH], clock_t* start, int* fps, int sclae);
 
 camera_t initialize_camera();
 

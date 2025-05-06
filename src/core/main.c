@@ -40,7 +40,7 @@ const int viewer_scale = 2;
 //-----------------------------------
 
 char* current_object = "";
-#define CURRENT_DIRECTORY "."
+#define CURRENT_DIRECTORY "/tmp/models"
 #define FILE_TYPE ".stl"
 
 int state = 0;
@@ -79,8 +79,8 @@ int main(int argc, char *argv[])
 	
 	float light[3] = {0.f,0.f,10.f};
 	
-	fdes = &font_winFreeSystem14x16;
-	// fdes = &font_rom8x16;
+	// fdes = &font_winFreeSystem14x16;
+	fdes = &font_rom8x16;
 	
 	obj_t obj = {0};
 	obj_t objs[1];
@@ -96,7 +96,6 @@ int main(int argc, char *argv[])
 					
 					clear_buffer(pixel_buffer);
 					
-					// display_files(dir, pixel_buffer, menu_scale);
 					display_files_centered(dir, pixel_buffer, menu_scale);
 					
 					choose_file(knobs, dir);
@@ -126,19 +125,20 @@ int main(int argc, char *argv[])
 					read_knobs_values(mem_base, knobs);
 					if(knobs->encoders_switched[0]) choose_mode = !choose_mode;
 
-
 					check_mode(&mode, choose_mode, knobs);
 
 					check_rotation(&obj, &cam, knobs);
 					
 					clear_buffer(pixel_buffer);
-
-					print_stats(mode, &fps, &start, knobs);
+					
 					
 					inverse(cam.orientation, cam.inv_orientation);
+					
 					proj_objs(objs, 1, cam, light, pixel_buffer, mode);
 					
-					draw_fps(pixel_buffer, &fps, viewer_scale);
+					draw_fps(pixel_buffer, &start, &fps, viewer_scale);
+					print_stats(mode, &fps, &start, knobs);
+
 					draw_frame(pixel_buffer, parlcd_mem_base);
 					// cam.coord[0] += 0.01f;
 
