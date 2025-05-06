@@ -16,12 +16,12 @@ SOURCES = src/core/main.c src/hardware/mzapo_phys.c src/hardware/mzapo_parlcd.c 
           src/hardware/knob.c src/core/main_utils.c
 SOURCES += src/display/font_prop14x16.c src/display/font_rom8x16.c
 TARGET_EXE = visualizer3d
-TARGET_IP ?= 192.168.223.104
+TARGET_IP ?= 192.168.223.211
 ifeq ($(TARGET_IP),)
 ifneq ($(filter debug run,$(MAKECMDGOALS)),)
 $(warning The target IP address is not set)
 $(warning Run as "TARGET_IP=192.168.202.xxx make run" or modify Makefile)
-TARGET_IP ?= 192.168.223.104
+TARGET_IP ?= 192.168.223.211
 endif
 endif
 TARGET_DIR ?= /tmp/$(shell whoami)
@@ -80,16 +80,15 @@ copy-executable: $(TARGET_EXE)
 	scp $(SSH_OPTIONS) $(TARGET_EXE) $(TARGET_USER)@$(TARGET_IP):$(TARGET_DIR)/$(TARGET_EXE)
 	
 	ssh $(SSH_OPTIONS) $(TARGET_USER)@$(TARGET_IP) mkdir -p /tmp/models
-
 	scp $(SSH_OPTIONS) models/*.stl $(TARGET_USER)@$(TARGET_IP):/tmp/models
 	
 run: copy-executable $(TARGET_EXE)
 	ssh $(SSH_OPTIONS) -t $(TARGET_USER)@$(TARGET_IP) $(TARGET_DIR)/$(TARGET_EXE)
 
 copy-test-file:
-	scp $(SSH_OPTIONS) *.stl $(TARGET_USER)@$(TARGET_IP):/root/
+	scp $(SSH_OPTIONS) *.stl $(TARGET_USER)@$(TARGET_IP):/tmp/models
 	
-	ssh $(SSH_OPTIONS) -t $(TARGET_USER)@$(TARGET_IP) ls -l /root/skull.stl
+	ssh $(SSH_OPTIONS) -t $(TARGET_USER)@$(TARGET_IP) ls -l /tmp/skull.stl
 	
 ifneq ($(filter -o ProxyJump=,$(SSH_OPTIONS))$(SSH_GDB_TUNNEL_REQUIRED),)
 SSH_GDB_PORT_FORWARD=-L 12345:127.0.0.1:12345

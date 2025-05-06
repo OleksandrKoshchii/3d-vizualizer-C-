@@ -1,7 +1,7 @@
 /*******************************************************************
   Main function of the 3D visualizer application
 
-  main.c      - main file
+  main.c - main file
 
   include your name there and license for distribution.
 
@@ -112,7 +112,6 @@ int main(int argc, char *argv[])
 						break;
 					}
 						
-
 					switch_state(&state, knobs);
 				}
 				break;
@@ -124,7 +123,7 @@ int main(int argc, char *argv[])
 					if(strcmp(current_object, object_to_load) != 0) {
 						// Load a new object
 						free_obj(&obj);
-						obj = load_object(object_to_load);
+						obj = load_object(CURRENT_DIRECTORY, object_to_load);
 						objs[0] = obj;
 						current_object = object_to_load;
 					}
@@ -136,17 +135,14 @@ int main(int argc, char *argv[])
 
 					check_rotation(&obj, &cam, knobs);
 					
-					
-					
 					inverse(cam.orientation, cam.inv_orientation);
 					
 					proj_objs(objs, 1, cam, light, pixel_buffer, mode);
 					
-					draw_fps(pixel_buffer, &start, &fps, viewer_scale);
-					print_stats(mode, &fps, &start, knobs);
+					// draw_fps(pixel_buffer, &start, &fps, viewer_scale);
+					// print_stats(mode, &fps, &start, knobs);
 
 					draw_frame(pixel_buffer, parlcd_mem_base);
-					// cam.coord[0] += 0.01f;
 
 					clock_nanosleep(CLOCK_MONOTONIC, 0, &delay, NULL);
 

@@ -10,11 +10,14 @@
 #include "mzapo_parlcd.h"
 #include "main_utils.h"
 
-obj_t load_object(char* object_to_load) {
-    printf("Loading 3D model: %s\n", object_to_load);
-    obj_t obj = readBinarySTL(object_to_load);
+obj_t load_object(char* path, char* object_to_load) {
+    char absolute_path[256];
+	snprintf(absolute_path, sizeof(absolute_path), "%s/%s", path, object_to_load);
+
+	printf("Loading 3D model: %s\n", absolute_path);
+    obj_t obj = readBinarySTL(absolute_path);
     current_object = object_to_load;
-    
+
     return obj;
 }
 

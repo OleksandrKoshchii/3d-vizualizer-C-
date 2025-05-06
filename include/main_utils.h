@@ -10,7 +10,7 @@ extern const int SCREEN_HEIGHT;
 extern const int SCREEN_WIDTH;
 extern char* current_object;
 
-obj_t load_object(char* object_to_load);
+obj_t load_object(char* path, char* object_to_load);
 
 void draw_pixel(unsigned char *parlcd_mem_base, uint16_t color);
 
