@@ -1,7 +1,7 @@
 #include <stdbool.h>
 
-extern const int SCREEN_HEIGHT;
-extern const int SCREEN_WIDTH;
+#include "render.h"
+
 
 float from_x_coord(int old_number){
 
