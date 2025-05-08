@@ -13,8 +13,6 @@
 #define RGB 3
 #define VERTICES_QUANTITY 3
 
-extern const int SCREEN_WIDTH;
-extern const int SCREEN_HEIGHT;
 extern const float FOV;
 
 //.....drawing properties.....//
@@ -46,51 +44,75 @@ void draw_triangle(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH], int x1, in
 	draw_line(pixelBuffer, x3, y3, x1, y1,color);
 }
 
+float z_interpolation(float x0, float  y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2, float x, float y){
 
-void draw_filled_triangle(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH], int x1, int y1, int x2, int y2, int x3, int y3, uint16_t color) {
+	float denom = (y1 - y2) * (x0 - x2) + (x2 - x1) * (y0 - y2);
+
+	float a = ((y1 - y2) * (x - x2) + (x2 - x1) * (y - y2))/denom;
+	float b = ((y2 - y0) * (x - x2) + (x0 - x2) * (y - y2))/denom;
+	float c = 1.f - a - b;
+
+	return 1.f/(a * (1.f/z0) + b * (1.f/z1) + c * (1.f/z2));
+}
+
+void draw_filled_triangle(uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH], int x0, int y0, int x1, int y1, int x2, int y2, uint16_t color) {
     // y sorting
-    if (y2 < y1) { int t = y1; y1 = y2; y2 = t; t = x1; x1 = x2; x2 = t; }
-    if (y3 < y1) { int t = y1; y1 = y3; y3 = t; t = x1; x1 = x3; x3 = t; }
-    if (y3 < y2) { int t = y2; y2 = y3; y3 = t; t = x2; x2 = x3; x3 = t; }
+    if (y1 < y0) { int t = y0; y0 = y1; y1 = t; t = x0; x0 = x1; x1 = t;}
+    if (y2 < y0) { int t = y0; y0 = y2; y2 = t; t = x0; x0 = x2; x2 = t;}
+    if (y2 < y1) { int t = y1; y1 = y2; y2 = t; t = x1; x1 = x2; x2 = t;}
 
     float inv_slope1, inv_slope2;
     int y;
 
-    if (y2 - y1 != 0) {
-        inv_slope1 = (float)(x2 - x1) / (y2 - y1);
-        inv_slope2 = (float)(x3 - x1) / (y3 - y1);
-        float curx1 = x1;
-        float curx2 = x1;
+    if (y1 - y0 != 0) {
+        inv_slope1 = (float)(x1 - x0) / (y1 - y0);
+        inv_slope2 = (float)(x2 - x0) / (y2 - y0);
+        float curx0 = x0;
+        float curx1 = x0;
 
-        for (y = y1; y <= y2; y++) {
-            int x_start = (int)curx1;
-            int x_end = (int)curx2;
+        for (y = y0; y <= y1; y++) {
+            int x_start = (int)curx0;
+            int x_end = (int)curx1;
             if (x_start > x_end) { int t = x_start; x_start = x_end; x_end = t; }
             for (int x = x_start; x <= x_end; x++) {
-                if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT)
-                    pixelBuffer[y][x] = color;
+                if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT){
+
+					//float Zvalue = z_interpolation(transformed->vertex[0][0], transformed->vertex[0][1],z0,transformed->vertex[1][0],transformed->vertex[1][1],z1,transformed->vertex[2][0],transformed->vertex[2][1],z2,x,y);
+				//	float Zvalue = z_interpolation(x0, y0,z0, x1, y1,z1,x2,y2,z2,x,y);
+				//	if(Zvalue <= Zbuffer[y][x]){
+				//		Zbuffer[y][x] = Zvalue;
+						pixelBuffer[y][x] = color;
+				//	}
+
+				}
             }
-            curx1 += inv_slope1;
-            curx2 += inv_slope2;
+            curx0 += inv_slope1;
+            curx1 += inv_slope2;
         }
     }
 
-    if (y3 - y2 != 0) {
-        inv_slope1 = (float)(x3 - x2) / (y3 - y2);
-        inv_slope2 = (float)(x3 - x1) / (y3 - y1);
-        float curx1 = x2;
-        float curx2 = x1 + inv_slope2 * (y2 - y1);
+    if (y2 - y1 != 0) {
+        inv_slope1 = (float)(x2 - x1) / (y2 - y1);
+        inv_slope2 = (float)(x2 - x0) / (y2 - y0);
+        float curx0 = x1;
+        float curx1 = x0 + inv_slope2 * (y1 - y0);
 
-        for (y = y2; y <= y3; y++) {
-            int x_start = (int)curx1;
-            int x_end = (int)curx2;
+        for (y = y1; y <= y2; y++) {
+            int x_start = (int)curx0;
+            int x_end = (int)curx1;
             if (x_start > x_end) { int t = x_start; x_start = x_end; x_end = t; }
             for (int x = x_start; x <= x_end; x++) {
-                if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT)
-                    pixelBuffer[y][x] = color;
+                if (x >= 0 && x < SCREEN_WIDTH && y >= 0 && y < SCREEN_HEIGHT){
+					//float Zvalue = z_interpolation(transformed->vertex[0][0], transformed->vertex[0][1],z0,transformed->vertex[1][0],transformed->vertex[1][1],z1,transformed->vertex[2][0],transformed->vertex[2][1],z2,x,y);
+				//	float Zvalue = z_interpolation(x0, y0,z0, x1, y1,z1,x2,y2,z2,x,y);
+				//	if(Zvalue <= Zbuffer[y][x]){
+				//		Zbuffer[y][x] = Zvalue;
+						pixelBuffer[y][x] = color;
+				//	}
+				}
             }
-            curx1 += inv_slope1;
-            curx2 += inv_slope2;
+            curx0 += inv_slope1;
+            curx1 += inv_slope2;
         }
     }
 }
@@ -193,82 +215,60 @@ void proj_triangle(triangle_t triangle, camera_t cam, float light[3], bool shado
 
 //		color = shadow ? (uint16_t)(drawingColor * 0.2f) : (uint16_t)(drawingColor * sc_multiply);
 
-    	draw_filled_triangle(pixelBuffer, coordX[0], coordY[0], coordX[1], coordY[1], coordX[2], coordY[2], color);
+		
+    draw_filled_triangle(pixelBuffer, (float)coordX[0], (float)coordY[0], (float)coordX[1], (float)coordY[1], (float)coordX[2], (float)coordY[2], color);
 	}
 }
 
-void proj_objs(obj_t* objs, int obj_quantity, camera_t cam, float light[3], uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH]) {
-    int triangles_quantity = 0;
-    for (int i = 0; i < obj_quantity; i++)
-        triangles_quantity += objs[i].quantity;
+void sort_triangles(obj_t* obj, int* indices, int length){
+	if(length <= 1)return;
+	float pivot = 0.f;
+	for(int i = 0; i < 3; i++){
+		pivot += (obj->triangles)[indices[length-1]]->vertex[i][0];
+	}
+	int newLen = 0;
+	for(int i = 0; i < length - 1; i++){
+		float val = 0.f;
+		for(int j = 0; j < 3; j++){
+			val += (obj->triangles)[indices[i]]->vertex[j][0];
+		}
+		if(val < pivot)newLen++;
+	}
+	int temp = indices[newLen];
+	indices[newLen] = indices[length-1];
+	indices[length - 1] = temp;
+	for(int i = 0; i < newLen; i++){
+		float val = 0.f;
+		for(int j = 0; j < 3; j++){
+			val += (obj->triangles)[indices[i]]->vertex[j][0];
+		}
+		if(val >= pivot){
+			for(int j = newLen+1; j < length; j++){
+				float val2 = 0.f;
+				for(int k = 0; k < 3; k++){
+					val2 += (obj->triangles)[indices[j]]->vertex[k][0];
+				}
+				if(val2 < pivot){
+					int temp = indices[j];
+					indices[j] = indices[i];
+					indices[i] = temp;
+				}
+			}
+		}
+	}
 
-    triangle_t** triangles = malloc(sizeof(triangle_t*) * triangles_quantity);
-    float* distances = malloc(sizeof(float) * triangles_quantity);
-    if (!triangles || !distances) {
-        fprintf(stderr, "ERROR: can't allocate memory!\n");
-        exit(ERROR_MALLOC);
-    }
+	sort_triangles(obj,indices, newLen);
+	sort_triangles(obj,indices+newLen+1, length-newLen-1);
+}
 
-    int t_index = 0;
-    for (int i = 0; i < obj_quantity; i++)
-        for (int j = 0; j < objs[i].quantity; j++)
-            triangles[t_index++] = objs[i].triangles[j];
 
-    for (int i = 0; i < triangles_quantity; i++) {
-        float center[3] = {
-            (triangles[i]->vertex[0][0] + triangles[i]->vertex[1][0] + triangles[i]->vertex[2][0]) / 3.f,
-            (triangles[i]->vertex[0][1] + triangles[i]->vertex[1][1] + triangles[i]->vertex[2][1]) / 3.f,
-            (triangles[i]->vertex[0][2] + triangles[i]->vertex[1][2] + triangles[i]->vertex[2][2]) / 3.f
-        };
-
-        float diff[3] = { center[0] - cam.coord[0], center[1] - cam.coord[1], center[2] - cam.coord[2] };
-        distances[i] = scalar_multiply(diff, diff);
-    }
-
-    // Painter's algorithm
-    for (int i = 0; i < triangles_quantity - 1; i++) {
-        for (int j = i + 1; j < triangles_quantity; j++) {
-            if (distances[i] < distances[j]) {
-                float tmp_dist = distances[i];
-                distances[i] = distances[j];
-                distances[j] = tmp_dist;
-
-                triangle_t* tmp_t = triangles[i];
-                triangles[i] = triangles[j];
-                triangles[j] = tmp_t;
-            }
-        }
-    }
-
-    for (int i = 0; i < triangles_quantity; i++) {
-        float center[3] = {
-            (triangles[i]->vertex[0][0] + triangles[i]->vertex[1][0] + triangles[i]->vertex[2][0]) / 3.f,
-            (triangles[i]->vertex[0][1] + triangles[i]->vertex[1][1] + triangles[i]->vertex[2][1]) / 3.f,
-            (triangles[i]->vertex[0][2] + triangles[i]->vertex[1][2] + triangles[i]->vertex[2][2]) / 3.f
-        };
-
-        float direction[3] = { center[0] - light[0], center[1] - light[1], center[2] - light[2] };
-        float len = sqrt(scalar_multiply(direction, direction));
-        float norm_dir[3] = { direction[0] / len, direction[1] / len, direction[2] / len };
-        float origin[3] = {
-            light[0] + norm_dir[0] * 0.001f,
-            light[1] + norm_dir[1] * 0.001f,
-            light[2] + norm_dir[2] * 0.001f
-        };
-
-        bool shadow = false;
-        for (int j = 0; j < triangles_quantity; j++) {
-            if (i == j) continue;
-            float t;
-            if (vec_triangle_collided(*triangles[j], origin, norm_dir, &t) && t < len) {
-                shadow = true;
-                break;
-            }
-        }
-
-        proj_triangle(*triangles[i], cam, light, shadow, pixelBuffer);
-    }
-
-    free(triangles);
-    free(distances);
+void proj_obj(obj_t* obj, camera_t cam, float light[3], uint16_t pixelBuffer[SCREEN_HEIGHT][SCREEN_WIDTH]) {
+	int indices[obj->quantity];
+	for(int i = 0; i < obj->quantity; i++){
+		indices[i] = i;
+	}
+	sort_triangles(obj, indices, obj->quantity);
+	for(int i = obj->quantity-1; i >= 0; i--){
+		proj_triangle(*(obj->triangles)[indices[i]],cam,light,false,pixelBuffer);
+	}
 }
