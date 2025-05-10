@@ -10,6 +10,13 @@
 #include "mzapo_parlcd.h"
 #include "main_utils.h"
 
+
+//.....drawing properties.....//
+extern uint16_t RED;
+extern uint16_t GREEN;
+extern uint16_t BLUE;
+//.....drawing properties.....//
+
 obj_t load_object(char* path, char* object_to_load) {
     char absolute_path[256];
 	snprintf(absolute_path, sizeof(absolute_path), "%s/%s", path, object_to_load);
@@ -42,11 +49,10 @@ void clear_buffer(uint16_t pixel_buffer[SCREEN_HEIGHT][SCREEN_WIDTH]) {
 	}
 }
 
-void print_stats(enum Mode mode, int* fps, clock_t* start, knobs_t* knobs) {
-	printf("%d B1: angle-%d pressed-%d switched-%d dif: %d; "
+void print_stats(int* fps, clock_t* start, knobs_t* knobs) {
+	printf("B1: angle-%d pressed-%d switched-%d dif: %d; "
 			  "B2: angle:%d pressed:%d switched:%d dif: %d; "
-			  "B3: angle:%d pressed:%d switched:%d dif: %d\n", 
-		       mode, knobs->encoders_values[0], knobs->encoders_pressed[0], knobs->encoders_switched[0], knobs->encoders_diff[0], 
+			  "B3: angle:%d pressed:%d switched:%d dif: %d\n", knobs->encoders_values[0], knobs->encoders_pressed[0], knobs->encoders_switched[0], knobs->encoders_diff[0], 
 			   knobs->encoders_values[1], knobs->encoders_pressed[1], knobs->encoders_switched[1], knobs->encoders_diff[1], 
 			   knobs->encoders_values[2], knobs->encoders_pressed[2], knobs->encoders_switched[2], knobs->encoders_diff[2]);
 	
@@ -66,8 +72,44 @@ void draw_fps(uint16_t pixel_buffer[SCREEN_HEIGHT][SCREEN_WIDTH], clock_t* start
 		snprintf(fps_str, sizeof(fps_str), "FPS: %d", *fps);
 	}
 	unsigned int col = hsv2rgb_lcd(0, 0, 255);
-	draw_string(pixel_buffer, 20, 260, fps_str, col, scale);
+	draw_string(pixel_buffer, 5, 295, fps_str, col, scale);
 }
+
+void draw_mode(uint16_t pixel_buffer[SCREEN_HEIGHT][SCREEN_WIDTH], bool wireframe, int scale) {
+	unsigned int col = hsv2rgb_lcd(0, 0, 255);
+	if(wireframe){
+		draw_string(pixel_buffer, 5, 5, "WIREFRAME", col, scale);
+	} else {
+		draw_string(pixel_buffer, 5, 5, "POLYGON", col, scale);
+	}
+}
+
+void draw_RGB_stats(uint16_t pixel_buffer[SCREEN_HEIGHT][SCREEN_WIDTH], int scale){
+	unsigned int col = hsv2rgb_lcd(0, 0, 255);
+	draw_string(pixel_buffer, 370, 5, "COLOR:", col, scale);
+
+	char str[20];
+	snprintf(str, 20, "R: %hhu", RED);
+	draw_string(pixel_buffer, 370, 30, str, col, scale);
+	snprintf(str, 20, "G: %hhu", GREEN);
+	draw_string(pixel_buffer, 370, 55, str, col, scale);
+	snprintf(str, 20, "B: %hhu", BLUE);
+	draw_string(pixel_buffer, 370, 80, str, col, scale);
+}
+
+void draw_light_position(uint16_t pixel_buffer[SCREEN_HEIGHT][SCREEN_WIDTH], float light[3], int scale){
+	unsigned int col = hsv2rgb_lcd(0, 0, 255);
+	draw_string(pixel_buffer, 370, 5, "LIGHT:", col, scale);
+
+	char str[20];
+	snprintf(str, 20, "X: %.0f", light[0]);
+	draw_string(pixel_buffer, 370, 30, str, col, scale);
+	snprintf(str, 20, "Y: %.0f", light[1]);
+	draw_string(pixel_buffer, 370, 55, str, col, scale);
+	snprintf(str, 20, "Z: %.0f", light[2]);
+	draw_string(pixel_buffer, 370, 80, str, col, scale);
+}
+
 
 camera_t initialize_camera() {
     camera_t cam = {

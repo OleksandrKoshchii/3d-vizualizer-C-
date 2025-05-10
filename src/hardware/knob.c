@@ -12,6 +12,19 @@
 #include "directory.h"
 #include "knob.h"
 
+//.....drawing properties.....//
+extern bool wireframe;
+extern uint8_t RED;
+extern uint8_t GREEN;
+extern uint8_t BLUE;
+//.....drawing properties.....//
+
+//.....MODES.....//
+extern bool changing_color;
+extern bool changing_light_pos;
+//.....MODES.....//
+
+
 clock_t first_click_time = 0;
 int knob_threshold = 2;
 
@@ -115,18 +128,6 @@ void switch_state(int* state, knobs_t* knobs) {
 	}
 }
 
-void check_mode(enum Mode* mode, bool choose_mode, knobs_t* knobs) {
-    if(choose_mode) {
-        if (knobs->encoders_diff[0] > 0) {
-            (*mode)++;
-            if(*mode > MODE_MAX) (*mode) = 0;
-        } else if(knobs->encoders_diff[0] < 0) {
-            (*mode)--;
-            if((*mode) < 0) (*mode) = MODE_MAX;
-        }
-    }
-}
-
 void check_rotation(obj_t* obj, camera_t* cam, knobs_t* knobs) {
 	if(knobs->encoders_diff[0] != 0) {
 		cam->coord[0] += knobs->encoders_diff[0] * 0.05f;
@@ -136,5 +137,35 @@ void check_rotation(obj_t* obj, camera_t* cam, knobs_t* knobs) {
 	}
 	if(knobs->encoders_diff[2] != 0) {
 		rotate_obj_vertical(obj, knobs->encoders_diff[2]);
+	}
+}
+
+void switch_mode(knobs_t* knobs){
+	if(knobs->encoders_switched[0] != 0){
+		wireframe = !wireframe;
+	}else if(knobs->encoders_switched[1] != 0){
+		changing_color = !changing_color;
+	}else if(knobs->encoders_switched[2] != 0){
+		changing_light_pos = !changing_light_pos;
+	}
+}
+
+void change_color(knobs_t* knobs){
+	if(knobs->encoders_diff[0] != 0){
+		BLUE += knobs->encoders_diff[0];
+	}
+	if(knobs->encoders_diff[1] != 0){
+		GREEN += knobs->encoders_diff[1];
+	}
+	if(knobs->encoders_diff[2] != 0){
+		RED += knobs->encoders_diff[2];
+	}
+}
+
+void change_light_position(knobs_t* knobs, float light[3]){
+	for(int i = 0; i < 3; i++){
+		if(knobs->encoders_diff[i] != 0){
+			light[i] += knobs->encoders_diff[i];
+		}
 	}
 }

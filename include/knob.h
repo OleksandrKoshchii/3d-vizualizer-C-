@@ -33,8 +33,6 @@ void choose_file(knobs_t* knobs, directory_t* dir);
 
 void switch_state(int* state, knobs_t* knobs);
 
-void check_mode(enum Mode* mode, bool choose_mode, knobs_t* knobs);
-
 void check_rotation(obj_t* obj, camera_t* cam, knobs_t* knobs);
 
 

@@ -12,9 +12,8 @@
 #include "mzapo_phys.h"
 #include "mzapo_regs.h"
 #include "font_types.h"
+#include "render.h"
  
-extern const int SCREEN_WIDTH;
-extern const int SCREEN_HEIGHT;
 extern font_descriptor_t *fdes;
  
 unsigned int hsv2rgb_lcd(int hue, int saturation, int value);

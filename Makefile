@@ -16,12 +16,12 @@ SOURCES = src/core/main.c src/hardware/mzapo_phys.c src/hardware/mzapo_parlcd.c 
           src/hardware/knob.c src/core/main_utils.c
 SOURCES += src/display/font_prop14x16.c src/display/font_rom8x16.c
 TARGET_EXE = visualizer3d
-TARGET_IP ?= 192.168.223.211
+TARGET_IP ?= 192.168.223.138
 ifeq ($(TARGET_IP),)
 ifneq ($(filter debug run,$(MAKECMDGOALS)),)
 $(warning The target IP address is not set)
 $(warning Run as "TARGET_IP=192.168.202.xxx make run" or modify Makefile)
-TARGET_IP ?= 192.168.223.211
+TARGET_IP ?= 192.168.223.138
 endif
 endif
 TARGET_DIR ?= /tmp/$(shell whoami)
@@ -29,8 +29,9 @@ TARGET_USER ?= root
 # for use from Eduroam network use TARGET_IP=localhost and enable next line
 #SSH_OPTIONS=-o "UserKnownHostsFile=/dev/null" -o "StrictHostKeyChecking=no" -o "Port=2222"
 #SSH_GDB_TUNNEL_REQUIRED=y
-SSH_OPTIONS=-i /home/sir/.ssh/mzapo-root-key
-SSH_OPTIONS+=-o 'ProxyJump=dankoyar@postel.felk.cvut.cz'
+
+SSH_OPTIONS=-i /home/oleksandr/cprog/apo/mzapo_template/mzapo-root-key
+SSH_OPTIONS+=-o 'ProxyJump=koshcol1@postel.felk.cvut.cz'
 
 OBJECTS += $(filter %.o,$(SOURCES:%.c=%.o))
 OBJECTS += $(filter %.o,$(SOURCES:%.cpp=%.o))

@@ -29,15 +29,22 @@
 #include "text.h"
 #include "knob.h"
 
-const int SCREEN_WIDTH = 480;
-const int SCREEN_HEIGHT = 320;
 const float FOV = 60;
-const int MODE_MAX = 1;
 const int menu_scale = 4;
 const int viewer_scale = 2;
 #define FPS 60
 
-//-----------------------------------
+//.....drawing properties.....//
+bool wireframe = false;
+uint8_t RED = 255;
+uint8_t GREEN = 0;
+uint8_t BLUE = 0;
+//.....drawing properties.....//
+
+//.....MODES.....//
+bool changing_color = false;
+bool changing_light_pos = false;
+//.....MODES.....//
 
 char* current_object = "";
 #define CURRENT_DIRECTORY "/tmp/models"
@@ -66,8 +73,6 @@ int main(int argc, char *argv[])
 	clock_t start = clock();
 	int fps = 0;
 	
-	bool choose_mode = false;
-	enum Mode mode = POLYGON;
 	//-----------------------------------
 	parlcd_hx8357_init(parlcd_mem_base);
 	
@@ -83,7 +88,6 @@ int main(int argc, char *argv[])
 	// fdes = &font_rom8x16;
 	
 	obj_t obj = {0};
-	obj_t objs[1];
 	char* object_to_load = dir->file_names[dir->active_file];
 
 	while (running) {
@@ -124,23 +128,31 @@ int main(int argc, char *argv[])
 						// Load a new object
 						free_obj(&obj);
 						obj = load_object(CURRENT_DIRECTORY, object_to_load);
-						objs[0] = obj;
 						current_object = object_to_load;
 					}
 
 					read_knobs_values(mem_base, knobs);
-					if(knobs->encoders_switched[0]) choose_mode = !choose_mode;
 
-					check_mode(&mode, choose_mode, knobs);
+					switch_mode(knobs);
 
-					check_rotation(&obj, &cam, knobs);
-					
+					if(changing_color){
+						change_color(knobs);
+						draw_RGB_stats(pixel_buffer, viewer_scale);
+					}else if(changing_light_pos){
+						change_light_position(knobs, light);
+						draw_light_position(pixel_buffer, light, viewer_scale);
+					}else{
+						check_rotation(&obj, &cam, knobs);
+					}
+
 					inverse(cam.orientation, cam.inv_orientation);
 					
-					proj_objs(objs, 1, cam, light, pixel_buffer, mode);
+					proj_obj(&obj, cam, light, pixel_buffer);
 					
-					// draw_fps(pixel_buffer, &start, &fps, viewer_scale);
-					// print_stats(mode, &fps, &start, knobs);
+					draw_fps(pixel_buffer, &start, &fps, viewer_scale);
+					draw_mode(pixel_buffer, wireframe, viewer_scale);
+
+					print_stats(&fps, &start, knobs);
 
 					draw_frame(pixel_buffer, parlcd_mem_base);
 
